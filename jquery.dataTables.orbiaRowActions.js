@@ -31,6 +31,8 @@
 	 *	"urlPattern": {String} - required; this pattern will be used for generating
 	 *		row action URL in the way that all occurencies of "%key%" will be
 	 *		replaced by the data from row["key"]
+	 *	"conditions": {Object} - optional; for each row, action will be shown if
+	 *		all conditions are met, object property names should be "data" indexes
 	 * 
 	 * @returns {Function}
 	 * 
@@ -47,7 +49,11 @@
 	 *					'orderable' => false,
 	 *					'sortable' => false,
 	 *					'render' => $.fn.DataTable.OrbiaRowActions([
-	 *						['title' => 'Edit', 'urlPattern' => '/examples/edit/%id%'],
+	 *						// Edit action will be show only if "is_editable" column
+	 *						// has a value of "1".
+	 *						['title' => 'Edit', 'urlPattern' => '/examples/edit/%id%', 'conditions' => {
+	 *							'is_editable' => '1'
+	 *						}],
 	 *						['title' => 'View', 'urlPattern' => '/examples/view/%slug%']
 	 *					])
 	 *				]
@@ -63,11 +69,22 @@
 					if (!this.title || !this.urlPattern) {
 						console && console.warn('Title or urlPattern not set.');
 					} else {
-						var li = $("<li>");
-						var a = $("<a>")
-								.attr('href', _useRowDataOnString(this.urlPattern, row))
-								.html(this.title);
-						li.append(a).appendTo(ul);
+						var show = true;
+						if (this.conditions) {
+							for (var column in this.conditions) {
+								var value = this.conditions[column];
+								if (row[column] !== value) {
+									show = false;
+								}
+							}
+						}
+						if (show) {
+							var li = $("<li>");
+							var a = $("<a>")
+									.attr('href', _useRowDataOnString(this.urlPattern, row))
+									.html(this.title);
+							li.append(a).appendTo(ul);
+						}
 					}
 				});
 				return ul.get(0).outerHTML;
